@@ -48,9 +48,10 @@ static const Rule rules[] = {
 	 *	WM_CLASS(STRING) = instance, class
 	 *	WM_NAME(STRING) = title
 	 */
-	/* class      instance    title       tags mask     isfloating   monitor */
-	{ "Gimp",     NULL,       NULL,       0,            1,           -1 },
-	{ "Firefox",  NULL,       NULL,       1 << 8,       0,           -1 },
+	/* class      	 instance    title       tags mask     isfloating   monitor */
+	{ "Gimp",     	 NULL,       NULL,       0,            1,           -1 },
+	{ "Firefox",  	 NULL,       NULL,       1 << 8,       0,           -1 },
+	{ "pavucontrol", NULL,       NULL,       0,            1,           -1 },
 };
 
 /* layout(s) */
@@ -96,6 +97,15 @@ static const char *volmute[] = { "pactl", "set-sink-mute", "@DEFAULT_SINK@", "to
 static const char *brightup[]   = { "brightnessctl", "set", "+5%", NULL };
 static const char *brightdown[] = { "brightnessctl", "set", "5%-", NULL };
 
+/* screen capturing with maim */
+static const char *screencap[] = { "sh", "-c",
+	"maim -s | xclip -selection clipboard -t image/png",
+	NULL };
+
+static const char *scrcapcurrentwindow[] = { "sh", "-c",
+	"maim -i $(xdotool getactivewindow) ~/screenshots/screenshot_$(date --iso-8601='seconds').jpg",
+	NULL };
+
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
@@ -138,11 +148,13 @@ static const Key keys[] = {
 	TAGKEYS(                        XK_8,                      7)
 	TAGKEYS(                        XK_9,                      8)
 	{ MODKEY|ShiftMask,             XK_q,      quit,           {0} },
-	{ 0, 				XF86XK_AudioRaiseVolume, spawn, {.v = volup   } },
-	{ 0, 				XF86XK_AudioLowerVolume, spawn, {.v = voldown } },
-	{ 0, 				XF86XK_AudioMute,        spawn, {.v = volmute} },
-	{ 0, 				XF86XK_MonBrightnessUp,        spawn, {.v = brightup} },
-	{ 0, 				XF86XK_MonBrightnessDown,        spawn, {.v = brightdown} },
+	{ MODKEY, 			XK_apostrophe,	spawn, 		{.v = volup   } },
+	{ MODKEY, 			XK_semicolon, spawn, 		{.v = voldown } },
+	{ 0, 				XF86XK_AudioMute,        	spawn, {.v = volmute} },
+	{ 0, 				XF86XK_MonBrightnessUp,        	spawn, {.v = brightup} },
+	{ 0, 				XF86XK_MonBrightnessDown,       spawn, {.v = brightdown} },
+	{ MODKEY|ShiftMask, 		XK_s,       spawn, 	   {.v = screencap} },
+	{ MODKEY|ShiftMask, 		XK_p,       spawn, 	   {.v = scrcapcurrentwindow} },
 };
 
 /* button definitions */
