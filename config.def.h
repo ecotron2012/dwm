@@ -50,9 +50,10 @@ static const Rule rules[] = {
 	 *	WM_CLASS(STRING) = instance, class
 	 *	WM_NAME(STRING) = title
 	 */
-	/* class      instance    title       tags mask     isfloating   monitor */
-	{ "Gimp",     NULL,       NULL,       0,            1,           -1 },
-	{ "Firefox",  NULL,       NULL,       1 << 8,       0,           -1 },
+	/* class      	 instance    title       tags mask     isfloating   monitor */
+	{ "Gimp",     	 NULL,       NULL,       0,            1,           -1 },
+	{ "Firefox",  	 NULL,       NULL,       1 << 8,       0,           -1 },
+	{ "pavucontrol", NULL,       NULL,       0,            1,           -1 },
 };
 
 /* layout(s) */
@@ -158,15 +159,14 @@ static const Key keys[] = {
 	TAGKEYS(                        XK_8,                      7)
 	TAGKEYS(                        XK_9,                      8)
 	{ MODKEY|ShiftMask,             XK_q,      quit,           {0} },
-	{ 0, 				XF86XK_AudioRaiseVolume, spawn, {.v = volup   } },
-	{ 0, 				XF86XK_AudioLowerVolume, spawn, {.v = voldown } },
-	{ 0, 				XF86XK_AudioMute,        spawn, {.v = volmute} },
-	{ 0, 				XF86XK_MonBrightnessUp,        spawn, {.v = brightup} },
-	{ 0, 				XF86XK_MonBrightnessDown,        spawn, {.v = brightdown} },
-	{ 0, 				XF86XK_Tools,        spawn, {.v = projectscreen} },
+	{ MODKEY, 			XK_apostrophe,	spawn, 		{.v = volup   } },
+	{ MODKEY, 			XK_semicolon, spawn, 		{.v = voldown } },
+	{ 0, 				XF86XK_AudioMute,        	spawn, {.v = volmute} },
+	{ 0, 				XF86XK_MonBrightnessUp,        	spawn, {.v = brightup} },
+	{ 0, 				XF86XK_MonBrightnessDown,       spawn, {.v = brightdown} },
 	{ MODKEY|ShiftMask, 		XK_s,       spawn, 	   {.v = screencap} },
 	{ MODKEY|ShiftMask, 		XK_p,       spawn, 	   {.v = scrcapcurrentwindow} },
-	{ MODKEY, 		XK_End,       spawn, 	   {.v = screenlock} },
+  { MODKEY, 		XK_End,       spawn, 	   {.v = screenlock} },
 };
 
 /* button definitions */
