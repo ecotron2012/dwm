@@ -18,7 +18,8 @@ static const char col_gray2[]       = "#444444";
 static const char col_gray3[]       = "#bbbbbb";
 static const char col_gray4[]       = "#eeeeee";
 static const char col_cyan[]        = "#005577";
-static const char col_lightblue[]    = "#b2ffff";
+static const char col_lightblue[]   = "#b2ffff";
+static const char col_darkblue[]    = "#1034a6";
 static const char col1[]            = "#ffffff";
 static const char col2[]            = "#ffffff";
 static const char col3[]            = "#ffffff";
@@ -38,7 +39,7 @@ static const char *colors[][3]      = {
 	[SchemeCol4]  = { col4,      col_gray1, col_gray2 },
 	[SchemeCol5]  = { col5,      col_gray1, col_gray2 },
 	[SchemeCol6]  = { col6,      col_gray1, col_gray2 },
-	[SchemeSel]   = { col_gray4, col_cyan,  col_lightblue  },
+	[SchemeSel]   = { col_gray4, col_cyan,  col_darkblue  },
 };
 
 /* tagging */
@@ -110,6 +111,11 @@ static const char *scrcapcurrentwindow[] = { "sh", "-c",
 static const char *screenlock[] = { "xsecurelock",
 	NULL };
 
+/* screen projection with xrandr */
+static const char *projectscreen[] = { "sh", "-c",
+	"xrandr --output eDP --mode 1920x1080 --output DisplayPort-0 --mode 1920x1080 --same-as eDP",
+	NULL };
+
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
@@ -157,6 +163,7 @@ static const Key keys[] = {
 	{ 0, 				XF86XK_AudioMute,        spawn, {.v = volmute} },
 	{ 0, 				XF86XK_MonBrightnessUp,        spawn, {.v = brightup} },
 	{ 0, 				XF86XK_MonBrightnessDown,        spawn, {.v = brightdown} },
+	{ 0, 				XF86XK_Tools,        spawn, {.v = projectscreen} },
 	{ MODKEY|ShiftMask, 		XK_s,       spawn, 	   {.v = screencap} },
 	{ MODKEY|ShiftMask, 		XK_p,       spawn, 	   {.v = scrcapcurrentwindow} },
 	{ MODKEY, 		XK_End,       spawn, 	   {.v = screenlock} },
