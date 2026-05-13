@@ -103,7 +103,7 @@ static const char *screencap[] = { "sh", "-c",
 	NULL };
 
 static const char *scrcapcurrentwindow[] = { "sh", "-c",
-	"maim -i $(xdotool getactivewindow) ~/screenshots/screenshot_$(date --iso-8601='seconds').jpg",
+	"maim -i $(xdotool getactivewindow) ~/screenshots/screenshot_$(date --iso-8601=seconds | tr ':' '-').jpg",
 	NULL };
 
 static const Key keys[] = {
