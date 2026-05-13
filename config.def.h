@@ -18,6 +18,8 @@ static const char col_gray2[]       = "#444444";
 static const char col_gray3[]       = "#bbbbbb";
 static const char col_gray4[]       = "#eeeeee";
 static const char col_cyan[]        = "#005577";
+static const char col_lightblue[]   = "#b2ffff";
+static const char col_darkblue[]    = "#1034a6";
 static const char col1[]            = "#ffffff";
 static const char col2[]            = "#ffffff";
 static const char col3[]            = "#ffffff";
@@ -37,7 +39,7 @@ static const char *colors[][3]      = {
 	[SchemeCol4]  = { col4,      col_gray1, col_gray2 },
 	[SchemeCol5]  = { col5,      col_gray1, col_gray2 },
 	[SchemeCol6]  = { col6,      col_gray1, col_gray2 },
-	[SchemeSel]   = { col_gray4, col_cyan,  col_cyan  },
+	[SchemeSel]   = { col_gray4, col_cyan,  col_darkblue  },
 };
 
 /* tagging */
@@ -103,7 +105,16 @@ static const char *screencap[] = { "sh", "-c",
 	NULL };
 
 static const char *scrcapcurrentwindow[] = { "sh", "-c",
-	"maim -i $(xdotool getactivewindow) ~/screenshots/screenshot_$(date --iso-8601=seconds | tr ':' '-').jpg",
+	"maim -i $(xdotool getactivewindow) ~/screenshots/screenshot_$(date --iso-8601='seconds').jpg",
+	NULL };
+
+/* screen lock with xsecurelock */
+static const char *screenlock[] = { "xsecurelock",
+	NULL };
+
+/* screen projection with xrandr */
+static const char *projectscreen[] = { "sh", "-c",
+	"xrandr --output eDP --mode 1920x1080 --output DisplayPort-0 --mode 1920x1080 --same-as eDP",
 	NULL };
 
 static const Key keys[] = {
@@ -155,6 +166,7 @@ static const Key keys[] = {
 	{ 0, 				XF86XK_MonBrightnessDown,       spawn, {.v = brightdown} },
 	{ MODKEY|ShiftMask, 		XK_s,       spawn, 	   {.v = screencap} },
 	{ MODKEY|ShiftMask, 		XK_p,       spawn, 	   {.v = scrcapcurrentwindow} },
+  { MODKEY, 		XK_End,       spawn, 	   {.v = screenlock} },
 };
 
 /* button definitions */
