@@ -40,6 +40,7 @@
 #include <X11/extensions/Xinerama.h>
 #endif /* XINERAMA */
 #include <X11/Xft/Xft.h>
+#include <fcntl.h>
 
 #include "drw.h"
 #include "util.h"
@@ -56,6 +57,13 @@
 #define HEIGHT(X)               ((X)->h + 2 * (X)->bw)
 #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
 #define TEXTW(X)                (drw_fontset_getwidth(drw, (X)) + lrpad)
+#define TTEXTW(X)               (drw_fontset_getwidth(drw, (X)))
+
+#define STATUSLENGTH            256
+#define DWMBLOCKSLOCKFILE       "/var/local/dwmblocks/dwmblocks.pid"
+#define DELIMITERENDCHAR        10
+#define LSPAD                   (lrpad / 2) /* padding on left side of status text */
+#define RSPAD                   (lrpad / 2) /* padding on right side of status text */
 
 #define SYSTEM_TRAY_REQUEST_DOCK    0
 /* XEMBED messages */
@@ -71,8 +79,7 @@
 #define XEMBED_EMBEDDED_VERSION (VERSION_MAJOR << 16) | VERSION_MINOR
 
 /* enums */
-enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
-enum { SchemeNorm, SchemeSel }; /* color schemes */
+enum { CurNormal, CurHand, CurResize, CurMove, CurLast }; /* cursor */
 enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetSystemTray, NetSystemTrayOP, NetSystemTrayOrientation, NetSystemTrayOrientationHorz,
        NetWMFullscreen, NetActiveWindow, NetWMWindowType,
@@ -141,6 +148,7 @@ struct Monitor {
 	unsigned int tagset[2];
 	int showbar;
 	int topbar;
+        int statushandcursor;
 	Client *clients;
 	Client *sel;
 	Client *stack;
@@ -159,11 +167,10 @@ typedef struct {
 	int monitor;
 } Rule;
 
-typedef struct Systray   Systray;
-struct Systray {
+typedef struct {
 	Window win;
 	Client *icons;
-};
+} Systray; 
 
 /* function declarations */
 static void applyrules(Client *c);
@@ -188,7 +195,6 @@ static void detachstack(Client *c);
 static Monitor *dirtomon(int dir);
 static void drawbar(Monitor *m);
 static void drawbars(void);
-static int drawstatusbar(Monitor *m, int bh, char* text);
 static void enternotify(XEvent *e);
 static void expose(XEvent *e);
 static void focus(Client *c);
@@ -198,7 +204,6 @@ static void focusstack(const Arg *arg);
 static Atom getatomprop(Client *c, Atom prop);
 static int getrootptr(int *x, int *y);
 static long getstate(Window w);
-static pid_t getstatusbarpid();
 static unsigned int getsystraywidth();
 static int gettextprop(Window w, Atom atom, char *text, unsigned int size);
 static void grabbuttons(Client *c, int focused);
@@ -220,10 +225,8 @@ static void quit(const Arg *arg);
 static Monitor *recttomon(int x, int y, int w, int h);
 static void removesystrayicon(Client *i);
 static void resize(Client *c, int x, int y, int w, int h, int interact);
-static void resizebarwin(Monitor *m);
 static void resizeclient(Client *c, int x, int y, int w, int h);
 static void resizemouse(const Arg *arg);
-static void resizerequest(XEvent *e);
 static void restack(Monitor *m);
 static void run(void);
 static void scan(void);
@@ -238,8 +241,8 @@ static void setmfact(const Arg *arg);
 static void setup(void);
 static void seturgent(Client *c, int urg);
 static void showhide(Client *c);
+static void sigdwmblocks(const Arg *arg);
 static void spawn(const Arg *arg);
-static void sigstatusbar(const Arg *arg);
 static Monitor *systraytomon(Monitor *m);
 static void tag(const Arg *arg);
 static void tagmon(const Arg *arg);
@@ -254,6 +257,7 @@ static void unmapnotify(XEvent *e);
 static void updatebarpos(Monitor *m);
 static void updatebars(void);
 static void updateclientlist(void);
+static void updatedwmblockssig(int x);
 static int updategeom(void);
 static void updatenumlockmask(void);
 static void updatesizehints(Client *c);
@@ -278,15 +282,16 @@ static void centeredfloatingmaster(Monitor *m);
 /* variables */
 static Systray *systray = NULL;
 static const char broken[] = "broken";
-static char stext[1024];
-static int statussig;
-static int statusw;
-static pid_t statuspid = -1;
+static char stextc[STATUSLENGTH];
+static char stexts[STATUSLENGTH];
 static int screen;
 static int sw, sh;           /* X display screen geometry width, height */
-static int bh;               /* bar height */
+static int bh, blw, ble;     /* bar geometry */
+static int wsbar;            /* width of selmon bar */
+static int wstext;           /* width of status text */
 static int lrpad;            /* sum of left and right padding for text */
 static int (*xerrorxlib)(Display *, XErrorEvent *);
+static unsigned int dwmblockssig;
 static unsigned int numlockmask = 0;
 static void (*handler[LASTEvent]) (XEvent *) = {
 	[ButtonPress] = buttonpress,
@@ -302,7 +307,6 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[MapRequest] = maprequest,
 	[MotionNotify] = motionnotify,
 	[PropertyNotify] = propertynotify,
-	[ResizeRequest] = resizerequest,
 	[UnmapNotify] = unmapnotify
 };
 static Atom wmatom[WMLast], netatom[NetLast], xatom[XLast];
@@ -484,13 +488,13 @@ attachstack(Client *c)
 void
 buttonpress(XEvent *e)
 {
-	unsigned int i, x, click;
+        int i, x;
+        unsigned int click;
 	Arg arg = {0};
 	Client *c;
 	Monitor *m;
 	XButtonPressedEvent *ev = &e->xbutton;
 
-	click = ClkRootWin;
 	/* focus monitor if necessary */
 	if ((m = wintomon(ev->window)) && m != selmon) {
 		unfocus(selmon->sel, 1);
@@ -498,50 +502,29 @@ buttonpress(XEvent *e)
 		focus(NULL);
 	}
 	if (ev->window == selmon->barwin) {
-		i = x = 0;
-		do
-			x += TEXTW(tags[i]);
-		while (ev->x >= x && ++i < LENGTH(tags));
-		if (i < LENGTH(tags)) {
-			click = ClkTagBar;
-			arg.ui = 1 << i;
-		} else if (ev->x < x + TEXTW(selmon->ltsymbol))
-			click = ClkLtSymbol;
-		else if (ev->x > selmon->ww - statusw) {
-			x = selmon->ww - statusw;
-			click = ClkStatusText;
-
-			char *text, *s, ch;
-			statussig = 0;
-			for (text = s = stext; *s && x <= ev->x; s++) {
-				if ((unsigned char)(*s) < ' ') {
-					ch = *s;
-					*s = '\0';
-					x += TEXTW(text) - lrpad;
-					*s = ch;
-					text = s + 1;
-					if (x >= ev->x)
-						break;
-					statussig = ch;
-				} else if (*s == '^') {
-					*s = '\0';
-					x += TEXTW(text) - lrpad;
-					*s = '^';
-					if (*(++s) == 'f')
-						x += atoi(++s);
-					while (*(s++) != '^');
-					text = s;
-					s--;
-				}
-			}
-		} else
-			click = ClkWinTitle;
+                if (ev->x < ble - blw) {
+                        i = -1, x = -ev->x;
+                        do
+                                x += TEXTW(tags[++i]);
+                        while (x <= 0);
+                        click = ClkTagBar;
+                        arg.ui = 1 << i;
+                } else if (ev->x < ble)
+                        click = ClkLtSymbol;
+                else if (ev->x < wsbar - wstext)
+                        click = ClkWinTitle;
+                else if ((x = wsbar - RSPAD - ev->x) > 0 && (x -= wstext - LSPAD - RSPAD) <= 0) {
+                        updatedwmblockssig(x);
+                        click = ClkStatusText;
+                } else
+                                return;
 	} else if ((c = wintoclient(ev->window))) {
 		focus(c);
 		restack(selmon);
 		XAllowEvents(dpy, ReplayPointer, CurrentTime);
 		click = ClkClientWin;
-	}
+	} else
+                click = ClkRootWin;
 	for (i = 0; i < LENGTH(buttons); i++)
 		if (click == buttons[i].click && buttons[i].func && buttons[i].button == ev->button
 		&& CLEANMASK(buttons[i].mask) == CLEANMASK(ev->state))
@@ -658,7 +641,6 @@ clientmessage(XEvent *e)
 			sendevent(c->win, netatom[Xembed], StructureNotifyMask, CurrentTime, XEMBED_WINDOW_ACTIVATE, 0 , systray->win, XEMBED_EMBEDDED_VERSION);
 			sendevent(c->win, netatom[Xembed], StructureNotifyMask, CurrentTime, XEMBED_MODALITY_ON, 0 , systray->win, XEMBED_EMBEDDED_VERSION);
 			XSync(dpy, False);
-			resizebarwin(selmon);
 			updatesystray();
 			setclientstate(c, NormalState);
 		}
@@ -717,7 +699,6 @@ configurenotify(XEvent *e)
 				for (c = m->clients; c; c = c->next)
 					if (c->isfullscreen)
 						resizeclient(c, m->mx, m->my, m->mw, m->mh);
-				resizebarwin(m);
 			}
 			focus(NULL);
 			arrange(NULL);
@@ -820,7 +801,6 @@ destroynotify(XEvent *e)
 		unmanage(c, 1);
 	else if ((c = wintosystrayicon(ev->window))) {
 		removesystrayicon(c);
-		resizebarwin(selmon);
 		updatesystray();
 	}
 }
@@ -863,123 +843,11 @@ dirtomon(int dir)
 	return m;
 }
 
-int
-drawstatusbar(Monitor *m, int bh, char* stext) {
-	int ret, i, j, w, x, len;
-	short isCode = 0;
-	char *text;
-	char *p;
-
-	len = strlen(stext) + 1 ;
-	if (!(text = (char*) malloc(sizeof(char)*len)))
-		die("malloc");
-	p = text;
-
-	i = -1, j = 0;
-	while (stext[++i])
-		if ((unsigned char)stext[i] >= ' ')
-			text[j++] = stext[i];
-	text[j] = '\0';
-
-	/* compute width of the status text */
-	w = 0;
-	i = -1;
-	while (text[++i]) {
-		if (text[i] == '^') {
-			if (!isCode) {
-				isCode = 1;
-				text[i] = '\0';
-				w += TEXTW(text) - lrpad;
-				text[i] = '^';
-				if (text[++i] == 'f')
-					w += atoi(text + ++i);
-			} else {
-				isCode = 0;
-				text = text + i + 1;
-				i = -1;
-			}
-		}
-	}
-	if (!isCode)
-		w += TEXTW(text) - lrpad;
-	else
-		isCode = 0;
-	text = p;
-
-	w += 2; /* 1px padding on both sides */
-	ret = x = m->ww - w;
-
-	drw_setscheme(drw, scheme[LENGTH(colors)]);
-	drw->scheme[ColFg] = scheme[SchemeNorm][ColFg];
-	drw->scheme[ColBg] = scheme[SchemeNorm][ColBg];
-	drw_rect(drw, x, 0, w, bh, 1, 1);
-	x++;
-
-	/* process status text */
-	i = -1;
-	while (text[++i]) {
-		if (text[i] == '^' && !isCode) {
-			isCode = 1;
-
-			text[i] = '\0';
-			w = TEXTW(text) - lrpad;
-			drw_text(drw, x, 0, w, bh, 0, text, 0);
-
-			x += w;
-
-			/* process code */
-			while (text[++i] != '^') {
-				if (text[i] == 'c') {
-					char buf[8];
-					memcpy(buf, (char*)text+i+1, 7);
-					buf[7] = '\0';
-					drw_clr_create(drw, &drw->scheme[ColFg], buf);
-					i += 7;
-				} else if (text[i] == 'b') {
-					char buf[8];
-					memcpy(buf, (char*)text+i+1, 7);
-					buf[7] = '\0';
-					drw_clr_create(drw, &drw->scheme[ColBg], buf);
-					i += 7;
-				} else if (text[i] == 'd') {
-					drw->scheme[ColFg] = scheme[SchemeNorm][ColFg];
-					drw->scheme[ColBg] = scheme[SchemeNorm][ColBg];
-				} else if (text[i] == 'r') {
-					int rx = atoi(text + ++i);
-					while (text[++i] != ',');
-					int ry = atoi(text + ++i);
-					while (text[++i] != ',');
-					int rw = atoi(text + ++i);
-					while (text[++i] != ',');
-					int rh = atoi(text + ++i);
-
-					drw_rect(drw, rx + x, ry, rw, rh, 1, 0);
-				} else if (text[i] == 'f') {
-					x += atoi(text + ++i);
-				}
-			}
-
-			text = text + i + 1;
-			i=-1;
-			isCode = 0;
-		}
-	}
-
-	if (!isCode) {
-		w = TEXTW(text) - lrpad;
-		drw_text(drw, x, 0, w, bh, 0, text, 0);
-	}
-
-	drw_setscheme(drw, scheme[SchemeNorm]);
-	free(p);
-
-	return ret;
-}
-
 void
 drawbar(Monitor *m)
 {
-	int x, w, tw = 0, stw = 0;
+	int x, w;
+        int wbar = m->ww;
 	int boxs = drw->fonts->h / 9;
 	int boxw = drw->fonts->h / 6 + 2;
 	unsigned int i, occ = 0, urg = 0;
@@ -988,15 +856,40 @@ drawbar(Monitor *m)
 	if (!m->showbar)
 		return;
 
-	if(showsystray && m == systraytomon(m) && !systrayonleft)
-		stw = getsystraywidth();
+        if (showsystray && m == systraytomon(m))
+                wbar -= getsystraywidth();
 
 	/* draw status first so it can be overdrawn by tags later */
 	if (m == selmon) { /* status is only drawn on selected monitor */
-		tw = statusw = m->ww - drawstatusbar(m, bh, stext);
+                char *stc = stextc;
+                char *stp = stextc;
+                char tmp;
+
+                wsbar = wbar;
+                drw_setscheme(drw, scheme[SchemeNorm]);
+                x = wbar - wstext;
+                drw_rect(drw, x, 0, LSPAD, bh, 1, 1); x += LSPAD; /* to keep left padding clean */
+                for (;;) {
+                        if ((unsigned char)*stc >= ' ') {
+                                stc++;
+                                continue;
+                        }
+                        tmp = *stc;
+                        if (stp != stc) {
+                                *stc = '\0';
+                                x = drw_text(drw, x, 0, TTEXTW(stp), bh, 0, stp, 0);
+                        }
+                        if (tmp == '\0')
+                                break;
+                        if (tmp - DELIMITERENDCHAR - 1 < LENGTH(colors))
+                                drw_setscheme(drw, scheme[tmp - DELIMITERENDCHAR - 1]);
+                        *stc = tmp;
+                        stp = ++stc;
+                }
+                drw_setscheme(drw, scheme[SchemeNorm]);
+                drw_rect(drw, x, 0, wbar - x, bh, 1, 1); /* to keep right padding clean */
 	}
 
-	resizebarwin(m);
 	for (c = m->clients; c; c = c->next) {
 		occ |= c->tags;
 		if (c->isurgent)
@@ -1017,7 +910,13 @@ drawbar(Monitor *m)
 	drw_setscheme(drw, scheme[SchemeNorm]);
 	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
 
-	if ((w = m->ww - tw - stw - x) > bh) {
+        if (m == selmon) {
+                blw = w, ble = x;
+                w = wbar - wstext - x;
+        } else
+                w = wbar - x;
+
+	if (w > bh) {
 		if (m->sel) {
 			drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
 			drw_text(drw, x, 0, w, bh, lrpad / 2, m->sel->name, 0);
@@ -1028,7 +927,9 @@ drawbar(Monitor *m)
 			drw_rect(drw, x, 0, w, bh, 1, 1);
 		}
 	}
-	drw_map(drw, m->barwin, 0, 0, m->ww - stw, bh);
+
+        XMoveResizeWindow(dpy, m->barwin, m->wx, m->by, wbar, bh);
+	drw_map(drw, m->barwin, 0, 0, wbar, bh);
 }
 
 void
@@ -1179,30 +1080,6 @@ getsystraywidth()
 	if(showsystray)
 		for(i = systray->icons; i; w += i->w + systrayspacing, i = i->next) ;
 	return w ? w + systrayspacing : 1;
-}
-
-pid_t
-getstatusbarpid()
-{
-	char buf[32], *str = buf, *c;
-	FILE *fp;
-
-	if (statuspid > 0) {
-		snprintf(buf, sizeof(buf), "/proc/%u/cmdline", statuspid);
-		if ((fp = fopen(buf, "r"))) {
-			fgets(buf, sizeof(buf), fp);
-			while ((c = strchr(str, '/')))
-				str = c + 1;
-			fclose(fp);
-			if (!strcmp(str, STATUSBAR))
-				return statuspid;
-		}
-	}
-	if (!(fp = popen("pidof -s "STATUSBAR, "r")))
-		return -1;
-	fgets(buf, sizeof(buf), fp);
-	pclose(fp);
-	return strtoul(buf, NULL, 10);
 }
 
 int
@@ -1436,7 +1313,6 @@ maprequest(XEvent *e)
 	Client *i;
 	if ((i = wintosystrayicon(ev->window))) {
 		sendevent(i->win, netatom[Xembed], StructureNotifyMask, CurrentTime, XEMBED_WINDOW_ACTIVATE, 0, systray->win, XEMBED_EMBEDDED_VERSION);
-		resizebarwin(selmon);
 		updatesystray();
 	}
 
@@ -1465,17 +1341,24 @@ void
 motionnotify(XEvent *e)
 {
 	static Monitor *mon = NULL;
+        int x;
 	Monitor *m;
 	XMotionEvent *ev = &e->xmotion;
 
-	if (ev->window != root)
-		return;
-	if ((m = recttomon(ev->x_root, ev->y_root, 1, 1)) != mon && mon) {
-		unfocus(selmon->sel, 1);
-		selmon = m;
-		focus(NULL);
-	}
-	mon = m;
+        if (ev->window == root) {
+                if ((m = recttomon(ev->x_root, ev->y_root, 1, 1)) != mon && mon) {
+                        unfocus(selmon->sel, 1);
+                        selmon = m;
+                        focus(NULL);
+                }
+                mon = m;
+        } else if (ev->window == selmon->barwin && (x = wsbar - RSPAD - ev->x) > 0
+                                                && (x -= wstext - LSPAD - RSPAD) <= 0)
+                updatedwmblockssig(x);
+        else if (selmon->statushandcursor) {
+                selmon->statushandcursor = 0;
+                XDefineCursor(dpy, selmon->barwin, cursor[CurNormal]->cursor);
+        }
 }
 
 void
@@ -1578,7 +1461,6 @@ propertynotify(XEvent *e)
 		}
 		else
 			updatesystrayiconstate(c, ev);
-		resizebarwin(selmon);
 		updatesystray();
 	}
 
@@ -1653,14 +1535,6 @@ resize(Client *c, int x, int y, int w, int h, int interact)
 }
 
 void
-resizebarwin(Monitor *m) {
-	unsigned int w = m->ww;
-	if (showsystray && m == systraytomon(m) && !systrayonleft)
-		w -= getsystraywidth();
-	XMoveResizeWindow(dpy, m->barwin, m->wx, m->by, w, bh);
-}
-
-void
 resizeclient(Client *c, int x, int y, int w, int h)
 {
 	XWindowChanges wc;
@@ -1673,19 +1547,6 @@ resizeclient(Client *c, int x, int y, int w, int h)
 	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
 	configure(c);
 	XSync(dpy, False);
-}
-
-void
-resizerequest(XEvent *e)
-{
-	XResizeRequestEvent *ev = &e->xresizerequest;
-	Client *i;
-
-	if ((i = wintosystrayicon(ev->window))) {
-		updatesystrayicongeom(i, ev->width, ev->height);
-		resizebarwin(selmon);
-		updatesystray();
-	}
 }
 
 void
@@ -2000,6 +1861,7 @@ setup(void)
 	xatom[XembedInfo] = XInternAtom(dpy, "_XEMBED_INFO", False);
 	/* init cursors */
 	cursor[CurNormal] = drw_cur_create(drw, XC_left_ptr);
+        cursor[CurHand] = drw_cur_create(drw, XC_hand2);
 	cursor[CurResize] = drw_cur_create(drw, XC_sizing);
 	cursor[CurMove] = drw_cur_create(drw, XC_fleur);
 	/* init appearance */
@@ -2067,17 +1929,34 @@ showhide(Client *c)
 }
 
 void
-sigstatusbar(const Arg *arg)
+sigdwmblocks(const Arg *arg)
 {
-	union sigval sv;
+        static int fd = -1;
+        struct flock fl;
+        union sigval sv;
 
-	if (!statussig)
-		return;
-	sv.sival_int = arg->i;
-	if ((statuspid = getstatusbarpid()) <= 0)
-		return;
-
-	sigqueue(statuspid, SIGRTMIN+statussig, sv);
+        if (!dwmblockssig)
+                return;
+        fl.l_type = F_WRLCK;
+        fl.l_whence = SEEK_SET;
+        fl.l_start = 0;
+        fl.l_len = 0;
+        if (fd != -1) {
+                if (fcntl(fd, F_GETLK, &fl) != -1 && fl.l_type == F_WRLCK)
+                        goto signal;
+                close(fd);
+                fl.l_type = F_WRLCK;
+        }
+        if ((fd = open(DWMBLOCKSLOCKFILE, O_RDONLY | O_CLOEXEC)) == -1)
+                return;
+        if (fcntl(fd, F_GETLK, &fl) == -1 || fl.l_type != F_WRLCK) {
+                close(fd);
+                fd = -1;
+                return;
+        }
+signal:
+        sv.sival_int = (dwmblockssig << 8) | arg->i;
+        sigqueue(fl.l_pid, SIGRTMIN, sv);
 }
 
 void
@@ -2153,7 +2032,6 @@ togglebar(const Arg *arg)
 {
 	selmon->showbar = selmon->pertag->showbars[selmon->pertag->curtag] = !selmon->showbar;
 	updatebarpos(selmon);
-	resizebarwin(selmon);
 	if (showsystray) {
 		XWindowChanges wc;
 		if (!selmon->showbar)
@@ -2300,7 +2178,7 @@ updatebars(void)
 	XSetWindowAttributes wa = {
 		.override_redirect = True,
 		.background_pixmap = ParentRelative,
-		.event_mask = ButtonPressMask|ExposureMask
+		.event_mask = ButtonPressMask|ExposureMask|PointerMotionMask
 	};
 	XClassHint ch = {"dwm", "dwm"};
 	for (m = mons; m; m = m->next) {
@@ -2345,6 +2223,41 @@ updateclientlist(void)
 			XChangeProperty(dpy, root, netatom[NetClientList],
 				XA_WINDOW, 32, PropModeAppend,
 				(unsigned char *) &(c->win), 1);
+}
+
+void
+updatedwmblockssig(int x)
+{
+        char *sts = stexts;
+        char *stp = stexts;
+        char tmp;
+
+        while (*sts != '\0') {
+                if ((unsigned char)*sts >= ' ') {
+                        sts++;
+                        continue;
+                }
+                tmp = *sts;
+                *sts = '\0';
+                x += TTEXTW(stp);
+                *sts = tmp;
+                if (x > 0) {
+                        if (tmp == DELIMITERENDCHAR)
+                                break;
+                        if (!selmon->statushandcursor) {
+                                selmon->statushandcursor = 1;
+                                XDefineCursor(dpy, selmon->barwin, cursor[CurHand]->cursor);
+                        }
+                        dwmblockssig = tmp;
+                        return;
+                }
+                stp = ++sts;
+        }
+        if (selmon->statushandcursor) {
+                selmon->statushandcursor = 0;
+                XDefineCursor(dpy, selmon->barwin, cursor[CurNormal]->cursor);
+        }
+        dwmblockssig = 0;
 }
 
 int
@@ -2488,10 +2401,27 @@ updatesizehints(Client *c)
 void
 updatestatus(void)
 {
-	if (!gettextprop(root, XA_WM_NAME, stext, sizeof(stext)))
-		strcpy(stext, "dwm-"VERSION);
-	drawbar(selmon);
-	updatesystray();
+	char rawstext[STATUSLENGTH];
+
+	if (gettextprop(root, XA_WM_NAME, rawstext, sizeof rawstext)) {
+                char stextp[STATUSLENGTH];
+                char *stp = stextp, *stc = stextc, *sts = stexts;
+
+                for (char *rst = rawstext; *rst != '\0'; rst++)
+                        if ((unsigned char)*rst >= ' ')
+                                *(stp++) = *(stc++) = *(sts++) = *rst;
+                        else if ((unsigned char)*rst > DELIMITERENDCHAR)
+                                *(stc++) = *rst;
+                        else
+                                *(sts++) = *rst;
+                *stp = *stc = *sts = '\0';
+                wstext = TTEXTW(stextp) + LSPAD + RSPAD;
+        } else {
+                strcpy(stextc, "dwm-"VERSION);
+                strcpy(stexts, stextc);
+                wstext = TTEXTW(stextc) + LSPAD + RSPAD;
+        }
+        drawbar(selmon);
 }
 
 
@@ -2554,13 +2484,10 @@ updatesystray(void)
 	Client *i;
 	Monitor *m = systraytomon(NULL);
 	unsigned int x = m->mx + m->mw;
-	unsigned int sw = TEXTW(stext) - lrpad + systrayspacing;
 	unsigned int w = 1;
 
 	if (!showsystray)
 		return;
-	if (systrayonleft)
-		x -= sw + lrpad / 2;
 	if (!systray) {
 		/* init systray */
 		if (!(systray = (Systray *)calloc(1, sizeof(Systray))))
