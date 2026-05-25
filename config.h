@@ -1,3 +1,4 @@
+#include <X11/XF86keysym.h>
 /* See LICENSE file for copyright and license details. */
 
 /* appearance */
@@ -17,6 +18,10 @@ static const char col_gray2[]       = "#444444";
 static const char col_gray3[]       = "#bbbbbb";
 static const char col_gray4[]       = "#eeeeee";
 static const char col_cyan[]        = "#005577";
+static const char col_black[]       = "#000000";
+static const char col_red[]         = "#ff0000";
+static const char col_yellow[]      = "#ffff00";
+static const char col_white[]       = "#ffffff";
 static const char col1[]            = "#ffffff";
 static const char col2[]            = "#ffffff";
 static const char col3[]            = "#ffffff";
@@ -25,10 +30,10 @@ static const char col5[]            = "#ffffff";
 static const char col6[]            = "#ffffff";
 
 enum { SchemeNorm, SchemeCol1, SchemeCol2, SchemeCol3, SchemeCol4,
-       SchemeCol5, SchemeCol6, SchemeSel }; /* color schemes */
+       SchemeCol5, SchemeCol6, SchemeSel, SchemeWarn, SchemeUrgent }; /* color schemes */
 
 static const char *colors[][3]      = {
-	/*               fg         bg         border   */
+	/*					fg         bg          border   */
 	[SchemeNorm]  = { col_gray3, col_gray1, col_gray2 },
 	[SchemeCol1]  = { col1,      col_gray1, col_gray2 },
 	[SchemeCol2]  = { col2,      col_gray1, col_gray2 },
@@ -37,6 +42,8 @@ static const char *colors[][3]      = {
 	[SchemeCol5]  = { col5,      col_gray1, col_gray2 },
 	[SchemeCol6]  = { col6,      col_gray1, col_gray2 },
 	[SchemeSel]   = { col_gray4, col_cyan,  col_cyan  },
+	[SchemeWarn] =	 { col_black, col_yellow, col_red },
+	[SchemeUrgent]=	 { col_white, col_red,    col_red },
 };
 
 /* tagging */
@@ -128,7 +135,7 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_d,      incnmaster,     {.i = -1 } },
 	{ MODKEY,                       XK_h,      setmfact,       {.f = -0.05} },
 	{ MODKEY,                       XK_l,      setmfact,       {.f = +0.05} },
-	{ MODKEY|ShiftMask,                       XK_Return, zoom,           {0} },
+	{ MODKEY|ShiftMask,             XK_Return, zoom,           {0} },
 	{ MODKEY,                       XK_Tab,    view,           {0} },
 	{ MODKEY,             		XK_q,      killclient,     {0} },
 	{ MODKEY,                       XK_t,      setlayout,      {.v = &layouts[0]} },
@@ -161,6 +168,9 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_q,      quit,           {0} },
 	{ MODKEY, 			XK_apostrophe,	spawn, 		{.v = volup   } },
 	{ MODKEY, 			XK_semicolon, spawn, 		{.v = voldown } },
+	{ 0, 				XF86XK_AudioMute,        	spawn, {.v = volmute} },
+	{ 0, 				XF86XK_MonBrightnessUp,        	spawn, {.v = brightup} },
+	{ 0, 				XF86XK_MonBrightnessDown,       spawn, {.v = brightdown} },
 	{ MODKEY|ShiftMask, 		XK_s,       spawn, 	   {.v = screencap} },
 	{ MODKEY|ShiftMask, 		XK_p,       spawn, 	   {.v = scrcapcurrentwindow} },
 	{ MODKEY, 			XK_End,       spawn, 	   {.v = screenlock} },
@@ -184,4 +194,3 @@ static const Button buttons[] = {
 	{ ClkTagBar,            MODKEY,         Button1,        tag,            {0} },
 	{ ClkTagBar,            MODKEY,         Button3,        toggletag,      {0} },
 };
-
