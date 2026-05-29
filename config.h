@@ -124,6 +124,10 @@ static const char *projectscreen[] = { "sh", "-c",
 	"xrandr --output eDP --mode 1920x1080 --output DisplayPort-0 --mode 1920x1080 --same-as eDP",
 	NULL };
 
+/* open default web browser */
+static const char *openwebbrowser[] = {"xdg-open", "http://",
+	NULL };
+
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
@@ -174,6 +178,7 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask, 		XK_s,       spawn, 	   {.v = screencap} },
 	{ MODKEY|ShiftMask, 		XK_p,       spawn, 	   {.v = scrcapcurrentwindow} },
 	{ MODKEY, 			XK_End,       spawn, 	   {.v = screenlock} },
+	{ MODKEY|ShiftMask, 		XK_b,	      spawn, 	   {.v = openwebbrowser}},
 };
 
 /* button definitions */
