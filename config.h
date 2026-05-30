@@ -128,6 +128,10 @@ static const char *projectscreen[] = { "sh", "-c",
 static const char *openwebbrowser[] = {"xdg-open", "http://",
 	NULL };
 
+/* access passwords with passmenu */
+static const char *openpassmenu[] = {"passmenu",
+	NULL };
+
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
@@ -179,6 +183,7 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask, 		XK_p,       spawn, 	   {.v = scrcapcurrentwindow} },
 	{ MODKEY, 			XK_End,       spawn, 	   {.v = screenlock} },
 	{ MODKEY|ShiftMask, 		XK_b,	      spawn, 	   {.v = openwebbrowser}},
+	{ MODKEY|ShiftMask, 		XK_k,	      spawn, 	   {.v = openpassmenu}},
 };
 
 /* button definitions */
