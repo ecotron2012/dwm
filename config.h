@@ -115,8 +115,8 @@ static const char *scrcapcurrentwindow[] = { "sh", "-c",
 	"maim -i $(xdotool getactivewindow) ~/screenshots/screenshot_$(date --iso-8601='seconds').jpg",
 	NULL };
 
-/* screen lock with xsecurelock */
-static const char *screenlock[] = { "xsecurelock",
+/* screen lock with xscreensaver */
+static const char *screenlock[] = { "xscreensaver-command", "-lock",
 	NULL };
 
 /* screen projection with xrandr */
@@ -129,7 +129,7 @@ static const char *openwebbrowser[] = {"xdg-open", "http://",
 	NULL };
 
 /* access passwords with passmenu */
-static const char *openpassmenu[] = {"passmenu",
+static const char *openpassmenu[] = {"passmenu", "-fn", dmenufont,
 	NULL };
 
 static const Key keys[] = {
