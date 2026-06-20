@@ -61,7 +61,7 @@
 
 #define STATUSLENGTH            256
 #define DWMBLOCKSLOCKFILE       "/var/local/dwmblocks/dwmblocks.pid"
-#define DELIMITERENDCHAR        10
+#define DELIMITERENDCHAR        11
 #define LSPAD                   (lrpad / 2) /* padding on left side of status text */
 #define RSPAD                   (lrpad / 2) /* padding on right side of status text */
 
@@ -886,7 +886,7 @@ drawbar(Monitor *m)
                         *stc = tmp;
                         stp = ++stc;
                 }
-                // drw_setscheme(drw, scheme[SchemeNorm]);
+                drw_setscheme(drw, scheme[SchemeNorm]);
                 drw_rect(drw, x, 0, wbar - x, bh, 1, 1); /* to keep right padding clean */
 	}
 
