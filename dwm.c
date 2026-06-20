@@ -886,7 +886,7 @@ drawbar(Monitor *m)
                         *stc = tmp;
                         stp = ++stc;
                 }
-                drw_setscheme(drw, scheme[SchemeNorm]);
+                // drw_setscheme(drw, scheme[SchemeNorm]);
                 drw_rect(drw, x, 0, wbar - x, bh, 1, 1); /* to keep right padding clean */
 	}
 
