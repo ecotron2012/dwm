@@ -101,23 +101,9 @@ static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() 
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray4, NULL };
 static const char *termcmd[]  = { "st", NULL };
 
-/* volume control */
-static const char *volup[]   = { "pactl", "set-sink-volume", "@DEFAULT_SINK@", "+5%", NULL };
-static const char *voldown[] = { "pactl", "set-sink-volume", "@DEFAULT_SINK@", "-5%", NULL };
-static const char *volmute[] = { "pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle", NULL };
-
 /* brightness control */
 static const char *brightup[]   = { "brightnessctl", "set", "+5%", NULL };
 static const char *brightdown[] = { "brightnessctl", "set", "5%-", NULL };
-
-/* screen capturing with maim */
-static const char *screencap[] = { "sh", "-c",
-	"maim -s | xclip -selection clipboard -t image/png",
-	NULL };
-
-static const char *scrcapcurrentwindow[] = { "sh", "-c",
-	"maim -i $(xdotool getactivewindow) ~/screenshots/screenshot_$(date --iso-8601='seconds').jpg",
-	NULL };
 
 /* screen lock with xscreensaver */
 static const char *screenlock[] = { "xscreensaver-command", "-lock",
@@ -178,13 +164,13 @@ static const Key keys[] = {
 	TAGKEYS(                        XK_8,                      7)
 	TAGKEYS(                        XK_9,                      8)
 	{ MODKEY|ShiftMask,             XK_q,      quit,           {0} },
-	{ 0, 			XF86XK_AudioRaiseVolume,	spawn, 		{.v = volup   } },
-	{ 0, 			XF86XK_AudioLowerVolume, spawn, 		{.v = voldown } },
-	{ 0, 				XF86XK_AudioMute,        	spawn, {.v = volmute} },
+	{ 0, 				XF86XK_AudioRaiseVolume,	spawn, 		SHCMD("pactl set-sink-volume @DEFAULT_SINK@ +5%; sigdwmblocks 2")  },
+	{ 0, 				XF86XK_AudioLowerVolume, 	spawn, 		SHCMD("pactl set-sink-volume @DEFAULT_SINK@ -5%; sigdwmblocks 2")  },
+	{ 0, 				XF86XK_AudioMute,        	spawn, 		SHCMD("pactl set-sink-mute @DEFAULT_SINK@ toggle; sigdwmblocks 2") },
 	{ 0, 				XF86XK_MonBrightnessUp,        	spawn, {.v = brightup} },
 	{ 0, 				XF86XK_MonBrightnessDown,       spawn, {.v = brightdown} },
-	{ MODKEY|ShiftMask, 		XK_s,       spawn, 	   {.v = screencap} },
-	{ MODKEY|ShiftMask, 		XK_p,       spawn, 	   {.v = scrcapcurrentwindow} },
+	{ MODKEY|ShiftMask, 		XK_s,       spawn, 	   SHCMD("maim -s | xclip -selection clipboard -t image/png") },
+	{ MODKEY|ShiftMask, 		XK_p,       spawn, 	   SHCMD("maim -i $(xdotool getactivewindow) ~/screenshots/screenshot_$(date --iso-8601='seconds').jpg") },
 	{ MODKEY, 			XK_End,       spawn, 	   {.v = screenlock} },
 	{ MODKEY|ShiftMask, 		XK_b,	      spawn, 	   {.v = openwebbrowser}},
 	{ MODKEY|ShiftMask, 		XK_k,	      spawn, 	   {.v = openpassmenu}},
