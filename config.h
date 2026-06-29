@@ -60,7 +60,7 @@ static const Rule rules[] = {
 	{ "Firefox", NULL,     NULL,           1 << 8,    0,          0,          -1,        -1 },
 	{ "st",      NULL,     NULL,           0,         0,          1,           0,        -1 },
 	{ NULL,      NULL,     "Event Tester", 0,         0,          0,           1,        -1 }, /* xev */
-	{ "pavucontrol", NULL, "PulseAudio Control",     0,         1,          0,    	 0, 	  -1 },
+	{ "pavucontrol", NULL, NULL,     0,         1,          0,    	 0, 	  -1 },
 	{ "Helium", NULL,     NULL,            0,         0,          0,          -1,        -1 },
 };
 
@@ -98,7 +98,7 @@ static const Layout layouts[] = {
 
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
-static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray4, NULL };
+static const char *dmenucmd[] = { "dmenu_run", "-i", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray4, NULL };
 static const char *termcmd[]  = { "st", NULL };
 
 /* brightness control */
@@ -169,6 +169,7 @@ static const Key keys[] = {
 	{ MODKEY, 			XK_End,       spawn, 	   {.v = screenlock} },
 	{ MODKEY|ShiftMask, 		XK_b,	      spawn, 	   {.v = openwebbrowser}},
 	{ MODKEY|ShiftMask, 		XK_k,	      spawn, 	   {.v = openpassmenu}},
+	{ MODKEY|ShiftMask, 		XK_m,	      spawn, 	   SHCMD("xdotool type $(grep -v '^#' ~/.config/bookmarks.txt | dmenu -i -l 50 | cut -d' ' -f1)")},
 };
 
 /* button definitions */
