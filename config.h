@@ -61,6 +61,7 @@ static const Rule rules[] = {
 	{ "st",      NULL,     NULL,           0,         0,          1,           0,        -1 },
 	{ NULL,      NULL,     "Event Tester", 0,         0,          0,           1,        -1 }, /* xev */
 	{ "pavucontrol", NULL, NULL,     0,         1,          0,    	 0, 	  -1 },
+	{ "webcam", NULL, NULL,     0,         1,          0,    	 0, 	  -1 },
 	{ "Helium", NULL,     NULL,            0,         0,          0,          -1,        -1 },
 };
 
@@ -167,8 +168,9 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask, 		XK_s,         spawn, 	   SHCMD("maim -s | xclip -selection clipboard -t image/png") },
 	{ MODKEY|ShiftMask, 		XK_p,         spawn, 	   SHCMD("maim -i $(xdotool getactivewindow) ~/screenshots/screenshot_$(date --iso-8601='seconds').jpg") },
 	{ MODKEY, 			XK_End,       spawn, 	   {.v = screenlock} },
-	{ MODKEY|ShiftMask, 		XK_b,	      spawn, 	   {.v = openwebbrowser}},
+	{ MODKEY|ShiftMask, 		XK_w,	      spawn, 	   {.v = openwebbrowser}},
 	{ MODKEY|ShiftMask, 		XK_k,	      spawn, 	   {.v = openpassmenu}},
+	{ MODKEY|ShiftMask, 		XK_b,	      spawn, 	   SHCMD("addbookmark")},
 	{ MODKEY|ShiftMask, 		XK_m,	      spawn, 	   SHCMD("xdotool type $(grep -v '^#' ~/.config/bookmarks.txt | dmenu -i -l 50 | cut -d' ' -f1)")},
 };
 
