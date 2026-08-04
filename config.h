@@ -196,7 +196,7 @@ static const Key keys[] = {
      SHCMD("xdotool type $(grep -v '^#' ~/.config/bookmarks.txt | dmenu -i -l "
            "50 | cut -d' ' -f1)")},
     {MODKEY | ShiftMask, XK_a, spawn, SHCMD("selectaudiosource")},
-    {MODKEY | ShiftMask, XK_c, spawn, SHCMD("st -e neomutt")},
+    {MODKEY | ShiftMask, XK_c, spawn, SHCMD("st -e bash -ic neomutt")},
 };
 
 /* button definitions */
