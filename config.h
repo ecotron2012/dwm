@@ -192,9 +192,7 @@ static const Key keys[] = {
     {MODKEY | ShiftMask, XK_w, spawn, {.v = openwebbrowser}},
     {MODKEY | ShiftMask, XK_k, spawn, {.v = openpassmenu}},
     {MODKEY | ShiftMask, XK_b, spawn, SHCMD("addbookmark")},
-    {MODKEY | ShiftMask, XK_m, spawn,
-     SHCMD("xdotool type $(grep -v '^#' ~/.config/bookmarks.txt | dmenu -i -l "
-           "50 | cut -d' ' -f1)")},
+    {MODKEY | ShiftMask, XK_m, spawn, SHCMD("bookmarkopener")},
     {MODKEY | ShiftMask, XK_a, spawn, SHCMD("selectaudiosource")},
     {MODKEY | ShiftMask, XK_c, spawn, SHCMD("st -e bash -ic neomutt")},
 };
