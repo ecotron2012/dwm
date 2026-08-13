@@ -178,7 +178,7 @@ static const Key keys[] = {
 	{ MODKEY|ShiftMask, 		XK_b,	      spawn, 	   SHCMD("addbookmark")},
 	{ MODKEY|ShiftMask, 		XK_w,	      spawn, 	   {.v = (const char*[]){BROWSER, NULL}}},
 	{ MODKEY|ShiftMask, 		XK_k,	      spawn, 	   {.v = openpassmenu}},
-	{ MODKEY|ShiftMask, 		XK_m,	      spawn, 	   SHCMD("xdotool type $(grep -v '^#' ~/.config/bookmarks.txt | dmenu -i -l 50 | cut -d' ' -f1)")},
+	{ MODKEY|ShiftMask, 		XK_m,	      spawn, 	   SHCMD("bookmarkopener")},
 	{ MODKEY|ShiftMask, 		XK_t,	      spawn, 	   SHCMD("projectscreen")},
 	{ MODKEY | ShiftMask, XK_c, spawn, SHCMD("st -t neomutt -e bash -ic neomutt")},
 };
