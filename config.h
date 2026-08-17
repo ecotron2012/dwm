@@ -185,9 +185,7 @@ static const Key keys[] = {
     {0, XF86XK_MonBrightnessDown, spawn, {.v = brightdown}},
     {MODKEY | ShiftMask, XK_s, spawn,
      SHCMD("maim -s | xclip -selection clipboard -t image/png")},
-    {MODKEY | ShiftMask, XK_p, spawn,
-     SHCMD("maim -i $(xdotool getactivewindow) ~/screenshots/screenshot_$(date "
-           "--iso-8601='seconds').jpg")},
+    {MODKEY | ShiftMask, XK_p, spawn, SHCMD("screenshotactivewindow")},
     {MODKEY, XK_End, spawn, {.v = screenlock}},
     {MODKEY | ShiftMask, XK_w, spawn, {.v = openwebbrowser}},
     {MODKEY | ShiftMask, XK_k, spawn, {.v = openpassmenu}},
