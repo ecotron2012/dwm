@@ -35,8 +35,6 @@ static const char col4[] = "#ffffff";
 static const char col5[] = "#ffffff";
 static const char col6[] = "#ffffff";
 
-static const char col_custom1 = "#d6652d";
-
 enum {
   SchemeNorm,
   SchemeCol1,
