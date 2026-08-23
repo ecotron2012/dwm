@@ -39,6 +39,9 @@ static const char col4[] = "#ffffff";
 static const char col5[] = "#ffffff";
 static const char col6[] = "#ffffff";
 
+static const char col_custombg[] = "#0b6623";
+static const char col_customborder[] = "#5ac8ff";
+
 enum {
   SchemeNorm,
   SchemeBatteryFull,
@@ -61,7 +64,8 @@ static const char *colors[][3] = {
     [SchemeCol4] = {col4, col_gray1, col_gray2},
     [SchemeCol5] = {col5, col_gray1, col_gray2},
     [SchemeCol6] = {col6, col_gray1, col_gray2},
-    [SchemeSel] = {col_gray4, col_cyan, col_cyan},
+    [SchemeSel] = {col_gray4, col_custombg, col_customborder},
+    // [SchemeSel] = {col_gray4, col_cyan, col_cyan},
     [SchemeWarn] = {col_black, col_yellow, col_red},
     [SchemeUrgent] = {col_white, col_red, col_red},
 };
