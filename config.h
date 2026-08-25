@@ -37,6 +37,10 @@ static const char col4[] = "#ffffff";
 static const char col5[] = "#ffffff";
 static const char col6[] = "#ffffff";
 
+// Custom colors
+static const char col_gbcyan[] = "#689d6a";
+static const char col_lightblue[] = "#5ac8ff";
+
 enum {
   SchemeNorm,
   SchemeCol1,
@@ -65,7 +69,9 @@ static const char *colors[][3] = {
 };
 
 /* tagging */
-static const char *tags[] = {"1", "2", "3", "4", "5", "6", "7", "8", "9"};
+// static const char *tags[] = {"1", "2", "3", "4", "5", "6", "7", "8", "9"};
+static const char *tags[] = {"", "", "", "󰙯", "5",
+                             "6",   "7",   "8",   "9"};
 
 static const Rule rules[] = {
     /* xprop(1):
@@ -122,9 +128,10 @@ static const Layout layouts[] = {
 /* commands */
 static char dmenumon[2] =
     "0"; /* component of dmenucmd, manipulated in spawn() */
-static const char *dmenucmd[] = {
-    "dmenu_run", "-i",      "-m",  dmenumon, "-fn", dmenufont, "-nb", col_gray1,
-    "-nf",       col_gray3, "-sb", col_cyan, "-sf", col_gray4, NULL};
+static char *dmenucmd[] = {
+    "dmenu_run", "-m",      dmenumon,  "-fn",     "Hack Nerd Font Mono:size=10",
+    "-nb",       "#222222", "-nf",     "#bbbbbb", "-sb",
+    "#005577",   "-sf",     "#eeeeee", NULL};
 static const char *termcmd[] = {"st", NULL};
 
 /* brightness control */
@@ -169,6 +176,7 @@ static const Key keys[] = {
     {MODKEY, XK_period, focusmon, {.i = +1}},
     {MODKEY | ShiftMask, XK_comma, tagmon, {.i = -1}},
     {MODKEY | ShiftMask, XK_period, tagmon, {.i = +1}},
+    {MODKEY, XK_F5, xresreload, {0}},
     {MODKEY, XK_minus, setgaps, {.i = -1}},
     {MODKEY, XK_equal, setgaps, {.i = +1}},
     {MODKEY | ShiftMask, XK_equal, setgaps, {.i = 0}},
@@ -213,4 +221,29 @@ static const Button buttons[] = {
     {ClkTagBar, 0, Button3, toggleview, {0}},
     {ClkTagBar, MODKEY, Button1, tag, {0}},
     {ClkTagBar, MODKEY, Button3, toggletag, {0}},
+};
+
+/* X resources to update */
+static const XResPref resources[] = {
+    /* name                type     address */
+    {"dwm.font1", STRING, &fonts[0]},
+    {"dwm.font2", STRING, &fonts[1]},
+    {"dwm.dmenufont", STRING, &dmenucmd[4]},
+    {"dwm.background", STRING, &dmenucmd[6]},
+    {"dwm.foreground", STRING, &dmenucmd[8]},
+    {"dwm.backgroundSel", STRING, &dmenucmd[10]},
+    {"dwm.foregroundSel", STRING, &dmenucmd[12]},
+    {"dwm.foreground", STRING, &colors[SchemeNorm][ColFg]},
+    {"dwm.background", STRING, &colors[SchemeNorm][ColBg]},
+    {"dwm.border", STRING, &colors[SchemeNorm][ColBorder]},
+    {"dwm.foregroundSel", STRING, &colors[SchemeSel][ColFg]},
+    {"dwm.backgroundSel", STRING, &colors[SchemeSel][ColBg]},
+    {"dwm.borderSel", STRING, &colors[SchemeSel][ColBorder]},
+    {"dwm.borderpx", INTEGER, &borderpx},
+    {"dwm.snap", INTEGER, &snap},
+    {"dwm.showbar", INTEGER, &showbar},
+    {"dwm.topbar", INTEGER, &topbar},
+    {"dwm.nmaster", INTEGER, &nmaster},
+    {"dwm.resizehints", INTEGER, &resizehints},
+    {"dwm.mfact", FLOAT, &mfact},
 };
