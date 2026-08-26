@@ -139,7 +139,7 @@ static const char *brightup[] = {"brightnessctl", "set", "+5%", NULL};
 static const char *brightdown[] = {"brightnessctl", "set", "5%-", NULL};
 
 /* screen lock with xscreensaver */
-static const char *screenlock[] = {"xscreensaver-command", "-lock", NULL};
+static const char *screenlock[] = {"slock", NULL};
 
 /* open default web browser */
 static const char *openwebbrowser[] = {"xdg-open", "http://", NULL};
