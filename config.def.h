@@ -2,9 +2,9 @@
 /* See LICENSE file for copyright and license details. */
 
 /* appearance */
-static const unsigned int borderpx = 1; /* border pixel of windows */
-static const unsigned int gappx = 5;    /* gaps between windows */
-static const unsigned int snap = 32;    /* snap pixel */
+static unsigned int borderpx = 1;    /* border pixel of windows */
+static const unsigned int gappx = 5; /* gaps between windows */
+static unsigned int snap = 32;       /* snap pixel */
 static const int swallowfloating =
     0; /* 1 means swallow floating windows by default */
 static const unsigned int systraypinning =
@@ -15,8 +15,8 @@ static const int systraypinningfailfirst =
     1; /* 1: if pinning fails, display systray on the first monitor, False:
           display systray on the last monitor*/
 static const int showsystray = 1; /* 0 means no systray */
-static const int showbar = 1;     /* 0 means no bar */
-static const int topbar = 1;      /* 0 means bottom bar */
+static int showbar = 1;           /* 0 means no bar */
+static int topbar = 1;            /* 0 means bottom bar */
 static const char *fonts[] = {"monospace:size=10"};
 static const char dmenufont[] = "monospace:size=10";
 static const char col_gray1[] = "#222222";
