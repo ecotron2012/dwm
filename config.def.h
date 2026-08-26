@@ -2,9 +2,9 @@
 /* See LICENSE file for copyright and license details. */
 
 /* appearance */
-static const unsigned int borderpx = 1; /* border pixel of windows */
-static const unsigned int gappx = 5;    /* gaps between windows */
-static const unsigned int snap = 32;    /* snap pixel */
+static unsigned int borderpx = 1;    /* border pixel of windows */
+static const unsigned int gappx = 5; /* gaps between windows */
+static unsigned int snap = 32;       /* snap pixel */
 static const int swallowfloating =
     0; /* 1 means swallow floating windows by default */
 static const unsigned int systraypinning =
@@ -15,8 +15,8 @@ static const int systraypinningfailfirst =
     1; /* 1: if pinning fails, display systray on the first monitor, False:
           display systray on the last monitor*/
 static const int showsystray = 1; /* 0 means no systray */
-static const int showbar = 1;     /* 0 means no bar */
-static const int topbar = 1;      /* 0 means bottom bar */
+static int showbar = 1;           /* 0 means no bar */
+static int topbar = 1;            /* 0 means bottom bar */
 static const char *fonts[] = {"monospace:size=10"};
 static const char dmenufont[] = "monospace:size=10";
 static const char col_gray1[] = "#222222";
@@ -50,15 +50,14 @@ enum {
 
 static const char *colors[][3] = {
     /*					fg         bg          border   */
-    [SchemeNorm] = {col_gray3, col_gray1, col_gray2},
+    [SchemeNorm] = {"#bbbbbb", "#222222", "#444444"},
     [SchemeCol1] = {col1, col_gray1, col_gray2},
     [SchemeCol2] = {col2, col_gray1, col_gray2},
     [SchemeCol3] = {col3, col_gray1, col_gray2},
     [SchemeCol4] = {col4, col_gray1, col_gray2},
     [SchemeCol5] = {col5, col_gray1, col_gray2},
     [SchemeCol6] = {col6, col_gray1, col_gray2},
-    // [SchemeSel]   = { col_gray4, col_cyan,  col_cyan  },
-    [SchemeSel] = {col_gray4, col_cyan, col_cyan},
+    [SchemeSel] = {"#eeeeee", "#005577", "#005577"},
     [SchemeWarn] = {col_black, col_yellow, col_red},
     [SchemeUrgent] = {col_white, col_red, col_red},
 };
@@ -80,10 +79,9 @@ static const Rule rules[] = {
 };
 
 /* layout(s) */
-static const float mfact = 0.55; /* factor of master area size [0.05..0.95] */
-static const int nmaster = 1;    /* number of clients in master area */
-static const int resizehints =
-    1; /* 1 means respect size hints in tiled resizals */
+static float mfact = 0.55;  /* factor of master area size [0.05..0.95] */
+static int nmaster = 1;     /* number of clients in master area */
+static int resizehints = 1; /* 1 means respect size hints in tiled resizals */
 static const int lockfullscreen =
     1; /* 1 will force focus on the fullscreen window */
 static const int refreshrate =
@@ -117,9 +115,10 @@ static const Layout layouts[] = {
 /* commands */
 static char dmenumon[2] =
     "0"; /* component of dmenucmd, manipulated in spawn() */
-static const char *dmenucmd[] = {
-    "dmenu_run", "-m",      dmenumon, "-fn",    dmenufont, "-nb",     col_gray1,
-    "-nf",       col_gray3, "-sb",    col_cyan, "-sf",     col_gray4, NULL};
+static char *dmenucmd[] = {"dmenu_run",         "-m",  dmenumon,  "-fn",
+                           "monospace:size=10", "-nb", "#222222", "-nf",
+                           "#bbbbbb",           "-sb", "#005577", "-sf",
+                           "#eeeeee",           NULL};
 static const char *termcmd[] = {"st", NULL};
 
 static const Key keys[] = {
@@ -149,6 +148,7 @@ static const Key keys[] = {
     {MODKEY | ShiftMask, XK_0, tag, {.ui = ~0}},
     {MODKEY, XK_comma, focusmon, {.i = -1}},
     {MODKEY, XK_period, focusmon, {.i = +1}},
+    {MODKEY, XK_F5, xresreload, {0}},
     {MODKEY | ShiftMask, XK_comma, tagmon, {.i = -1}},
     {MODKEY | ShiftMask, XK_period, tagmon, {.i = +1}},
     {MODKEY, XK_minus, setgaps, {.i = -1}},
@@ -177,4 +177,29 @@ static const Button buttons[] = {
     {ClkTagBar, 0, Button3, toggleview, {0}},
     {ClkTagBar, MODKEY, Button1, tag, {0}},
     {ClkTagBar, MODKEY, Button3, toggletag, {0}},
+};
+
+/* X resources to update */
+static const XResPref resources[] = {
+    /* name                type     address */
+    {"dwm.font1", STRING, &fonts[0]},
+    {"dwm.font2", STRING, &fonts[1]},
+    {"dwm.dmenufont", STRING, &dmenucmd[4]},
+    {"dwm.background", STRING, &dmenucmd[6]},
+    {"dwm.foreground", STRING, &dmenucmd[8]},
+    {"dwm.backgroundSel", STRING, &dmenucmd[10]},
+    {"dwm.foregroundSel", STRING, &dmenucmd[12]},
+    {"dwm.foreground", STRING, &colors[SchemeNorm][ColFg]},
+    {"dwm.background", STRING, &colors[SchemeNorm][ColBg]},
+    {"dwm.border", STRING, &colors[SchemeNorm][ColBorder]},
+    {"dwm.foregroundSel", STRING, &colors[SchemeSel][ColFg]},
+    {"dwm.backgroundSel", STRING, &colors[SchemeSel][ColBg]},
+    {"dwm.borderSel", STRING, &colors[SchemeSel][ColBorder]},
+    {"dwm.borderpx", INTEGER, &borderpx},
+    {"dwm.snap", INTEGER, &snap},
+    {"dwm.showbar", INTEGER, &showbar},
+    {"dwm.topbar", INTEGER, &topbar},
+    {"dwm.nmaster", INTEGER, &nmaster},
+    {"dwm.resizehints", INTEGER, &resizehints},
+    {"dwm.mfact", FLOAT, &mfact},
 };
