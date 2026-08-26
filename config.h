@@ -201,6 +201,7 @@ static const Key keys[] = {
     {MODKEY | ShiftMask, XK_m, spawn, SHCMD("bookmarkopener")},
     {MODKEY | ShiftMask, XK_a, spawn, SHCMD("selectaudiosource")},
     {MODKEY | ShiftMask, XK_c, spawn, SHCMD("st -e bash -ic neomutt")},
+    {MODKEY | ShiftMask, XK_n, spawn, SHCMD("st -e bash -ic newsboat")},
 };
 
 /* button definitions */
