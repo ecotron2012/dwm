@@ -70,7 +70,8 @@ static const char *colors[][3] = {
 };
 
 /* tagging */
-static const char *tags[] = {"1", "2", "3", "4", "5", "6", "7", "8", "9"};
+static const char *tags[] = {"", "", "", "", "󰍩",
+                             "6",   "7",   "8",   "9"};
 
 static const Rule rules[] = {
     /* xprop(1):
@@ -84,7 +85,7 @@ static const Rule rules[] = {
     {"st", NULL, NULL, 0, 0, 1, 0, -1},
     {"pavucontrol", NULL, NULL, 0, 1, 0, -1, -1},
     {NULL, NULL, "Webcam", 0, 1, 0, -1, -1},
-    {"Helium", NULL, NULL, 0, 0, 0, -1, -1},
+    {"Helium", NULL, NULL, 1 << 0, 0, 0, -1, -1},
     {NULL, NULL, "Event Tester", 0, 0, 0, 1, -1}, /* xev */
 };
 
@@ -136,7 +137,7 @@ static const char *brightup[] = {"brightnessctl", "set", "+5%", NULL};
 static const char *brightdown[] = {"brightnessctl", "set", "5%-", NULL};
 
 /* screen lock with xscreensaver */
-static const char *screenlock[] = {"xscreensaver-command", "-lock", NULL};
+static const char *screenlock[] = {"slock", NULL};
 
 /* screen projection with xrandr */
 static const char *projectscreen[] = {
